@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>產品詳情 · 待定</title>
+  <style>
+    :root{ --border:#e5e7eb; --muted:#6b7280; --ring:#3b82f6; }
+    body{font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;margin:0;background:#fff;color:#111827}
+    a{color:inherit;text-decoration:none}
+    header,footer{padding:12px 16px;border-bottom:1px solid var(--border);background:#f9fafb}
+    footer{border-top:1px solid var(--border);border-bottom:none;color:#6b7280}
+    .container{max-width:1100px;margin:0 auto;padding:16px}
+    .wrap{display:flex;gap:20px;flex-wrap:wrap}
+    .preview{flex:1 1 420px}
+    .preview img{width:100%;aspect-ratio:1/1;object-fit:contain;background:#fff;border:1px solid var(--border);border-radius:10px}
+    .meta{flex:1 1 320px}
+    h1{margin:0 0 10px;font-size:22px}
+    .price{color:#e11d48;font-weight:800;margin:8px 0}
+    .muted{color:#6b7280}
+    .row{margin:10px 0}
+    input[type=number]{width:100px;padding:10px 12px;border:1px solid var(--border);border-radius:10px}
+    .btn{padding:10px 14px;border:1px solid var(--border);border-radius:10px;cursor:pointer}
+    .btn:focus,.input:focus{outline:2px solid var(--ring);outline-offset:2px}
+    .primary{background:#111827;color:#fff;border-color:#111827}
+    .secondary{background:#fff}
+    .desc{margin-top:20px;border-top:1px dashed var(--border);padding-top:12px}
+    .badge{display:inline-block;min-width:18px;text-align:center;font-weight:700}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <a id="backLink" href="index.html">← 返回首頁</a>
+      <div class="muted">待定</div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="wrap">
+      <div class="preview">
+        <img id="img" alt="產品圖片" onerror="this.replaceWith(Object.assign(document.createElement('div'),{textContent:'圖片待補',className:'muted',style:'padding:16px;border:1px solid var(--border);border-radius:10px;text-align:center'}))">
+      </div>
+      <div class="meta">
+        <h1 id="title">暫定商品</h1>
+        <div class="price" id="price">HKD —</div>
+        <div class="row"><span id="stockLabel">庫存</span>：<span id="stock">999</span></div>
+        <div class="row">
+          <span id="qtyLabel">數量</span>：
+          <input id="qty" type="number" value="1" min="1" max="999">
+        </div>
+        <div class="row" style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn primary" id="buyNow">立即購買</button>
+          <button class="btn secondary" id="addCart">加入購物車</button>
+          <button class="btn secondary" id="goCheckout">去結算 🛒<span id="cartBadge" class="badge">0</span></button>
+        </div>
+      </div>
+    </div>
+
+    <section class="desc">
+      <h3 id="detailTitle">商品詳情</h3>
+      <p id="detail">（此處暫留空，之後可補充詳細介紹與規格。）</p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">© <span id="year"></span> 待定 • All rights reserved</div>
+  </footer>
+
+  <script>
+    // ========== 多語 ==========
+    const I18N = {
+      'zh-HK': { back:'← 返回首頁', stock:'庫存', qty:'數量', buy:'立即購買', add:'加入購物車', goCheckout:'去結算', detailTitle:'商品詳情', added:'已加入購物車', currency:'HKD' },
+      'zh-CN': { back:'← 返回首页', stock:'库存', qty:'数量', buy:'立即购买', add:'加入购物车', goCheckout:'去结算', detailTitle:'商品详情', added:'已加入购物车', currency:'HKD' },
+      'en':    { back:'← Back to Home', stock:'Stock', qty:'Qty', buy:'Buy now', add:'Add to cart', goCheckout:'Checkout', detailTitle:'Details', added:'Added to cart', currency:'HKD' }
+    };
+    const params = new URLSearchParams(location.search);
+    const lc = params.get('lc') || localStorage.getItem('dordor-locale') || 'zh-HK';
+    localStorage.setItem('dordor-locale', lc);
+    document.documentElement.lang = lc;
+    const t = I18N[lc] || I18N['zh-HK'];
+
+    // ========== 產品資料（與首頁一致，三語標題）==========
+    const IMG = n => `Archive/Untitled_design/${n}.png`;
+    const PRODUCTS = [
+      // id, price(cent), titles
+      {id:19, price:0,   zh_hk:'Life-Space 兒童益生菌粉 60g', zh_cn:'Life-Space 儿童益生菌粉 60g', en:'Life-Space Kids Probiotic Powder 60g'},
+      {id:18, price:0,   zh_hk:'Life-Space 雙倍強度益生菌 30粒', zh_cn:'Life-Space 双倍强度益生菌 30粒', en:'Life-Space Double Strength Probiotic 30 caps'},
+      {id:14, price:21000, zh_hk:"Caruso's 膠原蛋白粉 100g", zh_cn:"Caruso's 胶原蛋白粉 100g", en:"Caruso's Collagen Powder 100g"},
+      {id:15, price:21000, zh_hk:"Caruso's 膠原蛋白 60片", zh_cn:"Caruso's 胶原蛋白 60片", en:"Caruso's Collagen 60 tabs"},
+      {id:17, price:0,   zh_hk:"Designs for Health 高強度 Omega-3 120粒", zh_cn:"Designs for Health 高强度 Omega-3 120粒", en:"DFH High-Potency Omega-3 120 caps"},
+      {id:1,  price:43000, zh_hk:'PURITI 麥盧卡蜜糖 MGO350 1kg', zh_cn:'PURITI 麦卢卡蜂蜜 MGO350 1kg', en:'PURITI Manuka Honey MGO350 1kg'},
+      {id:2,  price:6500, zh_hk:'Hismile 牙膏 60g – 薄荷朱古力', zh_cn:'Hismile 牙膏 60g – 薄荷巧克力', en:'Hismile Toothpaste 60g – Choc Mint'},
+      {id:3,  price:6500, zh_hk:'Hismile 牙膏 60g – 士多啤梨奶油', zh_cn:'Hismile 牙膏 60g – 草莓奶油', en:'Hismile Toothpaste 60g – Strawberry Cream'},
+      {id:4,  price:6500, zh_hk:'Hismile 牙膏 60g – 可樂味', zh_cn:'Hismile 牙膏 60g – 可乐味', en:'Hismile Toothpaste 60g – Cola'},
+      {id:5,  price:6500, zh_hk:'Skin Control 可愛暗瘡貼 36片', zh_cn:'Skin Control 可爱痘痘贴 36片', en:'Skin Control Cute Acne Patches 36pcs'},
+      {id:6,  price:5500, zh_hk:'Dr.PAWPAW 潤唇膏 10ml', zh_cn:'Dr.PAWPAW 润唇膏 10ml', en:'Dr.PAWPAW Balm 10ml'},
+      {id:7,  price:5500, zh_hk:'Dr.PAWPAW 豐唇護唇油 8ml', zh_cn:'Dr.PAWPAW 丰唇护唇油 8ml', en:'Dr.PAWPAW Plumping Lip Oil 8ml'},
+      {id:8,  price:5500, zh_hk:'Dr.PAWPAW 有色潤唇膏 粉紅 10ml', zh_cn:'Dr.PAWPAW 有色润唇膏 粉红 10ml', en:'Dr.PAWPAW Tinted Balm Pink 10ml'},
+      {id:9,  price:5500, zh_hk:'Dr.PAWPAW 有色潤唇膏 珊瑚 10ml', zh_cn:'Dr.PAWPAW 有色润唇膏 珊瑚 10ml', en:'Dr.PAWPAW Tinted Balm Coral 10ml'},
+      {id:10, price:7000, zh_hk:'T2 French Earl Grey 茶包 10入', zh_cn:'T2 法式伯爵茶 10包', en:'T2 French Earl Grey 10 teabags'},
+      {id:11, price:6500, zh_hk:'Sunbites Grainwaves 酸忌廉青蔥 8包', zh_cn:'Sunbites Grainwaves 酸奶油葱 8包', en:'Sunbites Grainwaves Sour Cream & Chives 8pk'},
+      {id:12, price:6500, zh_hk:'Dermal Therapy 有色潤唇膏 玫瑰粉 8g', zh_cn:'Dermal Therapy 有色润唇膏 玫瑰粉 8g', en:'Dermal Therapy Tinted Lip Balm Rose 8g'},
+      {id:13, price:6500, zh_hk:'Dermal Therapy 有色潤唇膏 蜜桃裸 8g', zh_cn:'Dermal Therapy 有色润唇膏 蜜桃裸 8g', en:'Dermal Therapy Tinted Lip Balm Peach 8g'},
+      {id:16, price:6500, zh_hk:'Healthy Care 蜂膠液 25ml', zh_cn:'Healthy Care 蜂胶液 25ml', en:'Healthy Care Propolis Liquid 25ml'}
+    ];
+    const getTitle = (p) => lc==='zh-CN' ? (p.zh_cn||p.zh_hk) : lc==='en' ? (p.en||p.zh_hk) : p.zh_hk;
+    const findProduct = (id) => PRODUCTS.find(x=>String(x.id)===String(id)) || {id, price:0, zh_hk:`暫定商品 ${id}`, zh_cn:`暂定商品 ${id}`, en:`TBD ${id}`};
+
+    // ========== 初始化 ==========
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    const id = params.get('id') || '1';
+    const p  = findProduct(id);
+    const imgPath = IMG(id);
+
+    // 文案
+    document.getElementById('backLink').textContent = t.back;
+    const back = new URL('index.html', location.href); back.searchParams.set('lc', lc);
+    document.getElementById('backLink').href = back.toString();
+
+    document.getElementById('img').src = imgPath;
+    document.getElementById('title').textContent = getTitle(p);
+    document.getElementById('price').textContent = p.price ? `${t.currency} ${(p.price/100).toFixed(2)}` : `${t.currency} —`;
+    document.getElementById('stockLabel').textContent = t.stock;
+    document.getElementById('qtyLabel').textContent = t.qty;
+    document.getElementById('buyNow').textContent = t.buy;
+    document.getElementById('addCart').textContent = t.add;
+    document.getElementById('goCheckout').textContent = t.goCheckout + ' 🛒';
+    document.getElementById('detailTitle').textContent = t.detailTitle;
+
+    // ========== 購物車 ==========
+    const CART_KEY='dordor-cart';
+    const getCart=()=>{ try{ return JSON.parse(localStorage.getItem(CART_KEY))||[] }catch{ return [] } };
+    const setCart=(c)=> localStorage.setItem(CART_KEY, JSON.stringify(c));
+    const addToCart=(item)=>{
+      const c=getCart(); const i=c.findIndex(x=>x.id===item.id);
+      if(i>=0) c[i].qty+=item.qty; else c.push(item);
+      setCart(c); updateBadge();
+    };
+    function count(){ return getCart().reduce((s,x)=>s+x.qty,0); }
+    function updateBadge(){ const b=document.getElementById('cartBadge'); if(b) b.textContent=String(count()); }
+    updateBadge();
+
+    const qtyEl=document.getElementById('qty');
+
+    document.getElementById('addCart').onclick=()=>{
+      const qty=Math.max(1, parseInt(qtyEl.value||'1',10));
+      addToCart({ id:String(id), title:getTitle(p), price_cents:p.price||0, currency:t.currency, image:imgPath, qty });
+      alert(t.added);
+    };
+
+    document.getElementById('buyNow').onclick=()=>{
+      const qty=Math.max(1, parseInt(qtyEl.value||'1',10));
+      setCart([{ id:String(id), title:getTitle(p), price_cents:p.price||0, currency:t.currency, image:imgPath, qty }]);
+      const url = new URL('checkout.html', location.href); url.searchParams.set('lc', lc);
+      location.href = url.toString();
+    };
+
+    document.getElementById('goCheckout').onclick=()=>{
+      const url = new URL('checkout.html', location.href); url.searchParams.set('lc', lc);
+      location.href = url.toString();
+    };
+  </script>
+</body>
+</html>

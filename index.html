@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>待定 | 精選預購・現貨專區</title>
+  <meta name="description" content="香港代購網站 Demo：精選預購、現貨好物、澳洲代購服務" />
+  <link rel="icon" href="/favicon.ico" />
+  <style>
+    :root{ --bg:#ffffff; --fg:#111827; --muted:#6b7280; --card:#f9fafb; --border:#e5e7eb; --ring:#3b82f6; --maxw:1200px; }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{ margin:0; font-family: ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans";
+      background:var(--bg); color:var(--fg); -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+    a{color:inherit;text-decoration:none}
+    .container{width:100%;max-width:var(--maxw);padding:0 12px;margin:0 auto}
+
+    /* Header（更紧凑） */
+    .site-header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.95);
+      backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--border)}
+    .header-inner{display:flex;align-items:center;justify-content:space-between;height:50px;gap:8px}
+    .left{display:flex;align-items:center;gap:12px}
+    .logo{font-weight:800;font-size:16px;white-space:nowrap;padding:2px 8px;border:1px solid var(--border);border-radius:8px}
+    nav.nav{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    nav.nav a{color:var(--muted);padding:6px 8px;border-radius:10px;font-size:13px}
+    nav.nav a:hover,[aria-current="page"]{color:var(--fg);background:#f3f4f6}
+    .right{display:flex;align-items:center;gap:6px}
+    .iconbtn,.select,.input{height:32px;border-radius:10px;border:1px solid var(--border);background:#fff;padding:0 10px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:13px}
+    .input{min-width:180px}
+    .badge{min-width:18px;text-align:center;font-weight:700}
+    @media (max-width:640px){ .header-inner{flex-wrap:wrap;height:auto;padding:6px 0} .input{flex:1;min-width:120px} }
+
+    /* Banners */
+    .banner{width:100%;margin:12px auto 14px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#fff}
+    .banner img{display:block;width:100%;height:auto;object-fit:cover}
+
+    /* Sections / Grid */
+    .section{padding:8px 0 4px}
+    .sec-head{display:flex;align-items:center;justify-content:space-between;margin:4px 0 8px}
+    .sec-title{font-weight:700;font-size:16px}
+    .grid{display:grid;gap:12px;grid-template-columns:repeat(12,1fr)}
+    @media (max-width:1024px){.grid{grid-template-columns:repeat(8,1fr)}}
+    @media (max-width:640px){.grid{grid-template-columns:repeat(4,1fr)}}
+    .card{grid-column:span 4;background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+    .media{aspect-ratio:1/1;background:#fff;display:flex;align-items:center;justify-content:center}
+    .media img{max-width:100%;max-height:100%;object-fit:contain}
+    .content{padding:8px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .title{font-size:13px;font-weight:600}
+    .muted{color:var(--muted);font-size:12px}
+    .site-footer{margin-top:24px;padding:14px 0;border-top:1px solid var(--border);color:var(--muted);font-size:12px}
+
+    /* Auth modal */
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;padding:12px;z-index:100}
+    .modal.open{display:flex}
+    .dialog{width:min(460px,100%);background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;color:#111827}
+    .dlg-head{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+    .dlg-body{padding:12px;display:grid;gap:10px}
+    .tabs{display:flex;gap:6px}
+    .tab{height:30px;border:1px solid var(--border);border-radius:8px;background:#fff;padding:0 10px;cursor:pointer;font-size:13px}
+    .dlg-input{height:34px;border:1px solid var(--border);border-radius:8px;padding:0 10px;font-size:13px}
+    .dlg-actions{display:flex;gap:8px;justify-content:flex-end}
+    .link{color:#2563eb;cursor:pointer}
+    .checkbox{display:flex;align-items:center;gap:6px;font-size:12px}
+    .err{color:#b91c1c;font-size:12px}
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="left">
+        <div class="logo" id="brand">待定</div>
+        <nav class="nav" aria-label="Primary">
+          <a href="#" aria-current="page" data-i18n="nav.home">首頁</a>
+          <a href="#preorder" data-i18n="nav.pre">精選預購</a>
+          <a href="#instock" data-i18n="nav.stock">現貨專區</a>
+          <a href="#agent" data-i18n="nav.agent">澳洲代購服務</a>
+        </nav>
+      </div>
+      <div class="right">
+        <label class="iconbtn" for="q">🔎
+          <input id="q" class="input" data-i18n-placeholder="search" placeholder="快速搜尋產品" />
+        </label>
+        <button class="iconbtn" id="loginBtn" data-i18n="auth.login">登入 / 註冊</button>
+        <button class="iconbtn" id="cartBtn">🛒 <span id="cartBadge" class="badge">0</span></button>
+        <select id="locale" class="select" aria-label="Language">
+          <option value="zh-HK">繁體中文</option>
+          <option value="en">English</option>
+          <option value="zh-CN">简体中文</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" role="main">
+    <!-- 顶部横幅（直接路径，确保显示） -->
+    <section class="banner"><img src="Archive/Promo_Banner/1.png" alt="Banner 1"></section>
+
+    <!-- 精選預購 -->
+    <section class="section" id="preorder">
+      <div class="sec-head"><div class="sec-title" data-i18n="sec.pre">精選預購</div></div>
+      <div class="grid" id="grid-pre"></div>
+    </section>
+
+    <section class="banner"><img src="Archive/Promo_Banner/2.png" alt="Banner 2"></section>
+
+    <!-- 現貨專區 -->
+    <section class="section" id="instock">
+      <div class="sec-head"><div class="sec-title" data-i18n="sec.stock">現貨好物</div></div>
+      <div class="grid" id="grid-stock"></div>
+    </section>
+
+    <section class="banner"><img src="Archive/Promo_Banner/3.png" alt="Banner 3"></section>
+
+    <!-- 澳洲代購服務（使用第 4/5 张 Banner） -->
+    <section class="section" id="agent">
+      <div class="sec-head"><div class="sec-title" data-i18n="sec.agent">澳洲代購服務</div></div>
+      <div class="banner" style="margin-top:0"><img src="Archive/Promo_Banner/4.png" alt="Banner 4"></div>
+      <div class="banner"><img src="Archive/Promo_Banner/5.png" alt="Banner 5"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer"><div class="container">© <span id="year"></span> <span id="brand2">待定</span> • <span data-i18n="rights">All rights reserved</span></div></footer>
+
+  <!-- 登录/注册弹窗（双 Tab） -->
+  <div class="modal" id="authModal" aria-hidden="true" role="dialog" aria-labelledby="authTitle">
+    <div class="dialog">
+      <div class="dlg-head">
+        <strong id="authTitle" data-i18n="auth.title">帳戶</strong>
+        <button class="tab" id="closeAuth">✕</button>
+      </div>
+      <div class="dlg-body">
+        <div class="tabs">
+          <button class="tab" id="tabLogin" data-i18n="auth.loginTab">登入</button>
+          <button class="tab" id="tabRegister" data-i18n="auth.registerTab">註冊</button>
+        </div>
+
+        <!-- 登入 -->
+        <div id="loginView">
+          <input class="dlg-input" type="email" id="loginEmail" data-i18n-placeholder="auth.email" placeholder="電郵 Email">
+          <input class="dlg-input" type="password" id="loginPassword" data-i18n-placeholder="auth.password" placeholder="密碼 Password">
+          <div class="dlg-actions">
+            <button class="tab" id="doLogin" data-i18n="auth.login">登入</button>
+          </div>
+          <div class="muted" style="font-size:12px">
+            <span data-i18n="auth.noAccount">還沒有帳號？</span>
+            <span class="link" id="goRegister" data-i18n="auth.registerNow">立即註冊</span>
+          </div>
+          <div id="loginMsg" class="err"></div>
+        </div>
+
+        <!-- 註冊 -->
+        <div id="registerView" style="display:none">
+          <input class="dlg-input" type="email" id="regEmail" data-i18n-placeholder="auth.email" placeholder="電郵 Email">
+          <input class="dlg-input" id="regUsername" data-i18n-placeholder="auth.username" placeholder="用戶名 Username">
+          <input class="dlg-input" type="password" id="regPassword" data-i18n-placeholder="auth.password" placeholder="密碼 Password">
+          <input class="dlg-input" type="password" id="regPassword2" data-i18n-placeholder="auth.password2" placeholder="確認密碼 Confirm password">
+          <label class="checkbox">
+            <input type="checkbox" id="agree" />
+            <span data-i18n="auth.agree">我已閱讀並同意</span>
+            <a class="link" href="/privacy.html" target="_blank" rel="noopener" data-i18n="auth.privacy">私隱條款</a>
+          </label>
+          <div class="dlg-actions">
+            <button class="tab" id="doRegister" data-i18n="auth.register">註冊</button>
+          </div>
+          <div id="regMsg" class="err"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // ========== i18n ==========
+  const I18N = {
+    'zh-HK': {
+      brand:'待定','nav.home':'主頁','nav.pre':'精選預購','nav.stock':'現貨專區','nav.agent':'澳洲代購服務',
+      'search':'快速搜尋產品','sec.pre':'精選預購','sec.stock':'現貨好物','sec.agent':'澳洲代購服務',
+      'rights':'保留所有權利','auth.title':'帳戶','auth.login':'登入','auth.logout':'登出','auth.register':'註冊',
+      'auth.registerTab':'註冊','auth.loginTab':'登入','auth.email':'電郵','auth.password':'密碼','auth.password2':'確認密碼',
+      'auth.username':'用戶名','auth.noAccount':'還沒有帳號？','auth.registerNow':'立即註冊','auth.agree':'我已閱讀並同意','auth.privacy':'私隱條款',
+      'price.na':'HKD —','btn.add':'加入'
+    },
+    'zh-CN': {
+      brand:'待定','nav.home':'首页','nav.pre':'精选预购','nav.stock':'现货专区','nav.agent':'澳洲代购服务',
+      'search':'快速搜索产品','sec.pre':'精选预购','sec.stock':'现货好物','sec.agent':'澳洲代购服务',
+      'rights':'保留所有权利','auth.title':'账户','auth.login':'登录','auth.logout':'退出登录','auth.register':'注册',
+      'auth.registerTab':'注册','auth.loginTab':'登录','auth.email':'邮箱','auth.password':'密码','auth.password2':'确认密码',
+      'auth.username':'用户名','auth.noAccount':'没有账号？','auth.registerNow':'立即注册','auth.agree':'我已阅读并同意','auth.privacy':'隐私条款',
+      'price.na':'HKD —','btn.add':'加入'
+    },
+    'en': {
+      brand:'TBD','nav.home':'Home','nav.pre':'Pre-Order Picks','nav.stock':'In-stock','nav.agent':'Aussie Shopping Agent',
+      'search':'Quick search products','sec.pre':'Exclusive Pre-Order','sec.stock':'In-stock Goodies','sec.agent':'Aussie Shopping Agent',
+      'rights':'All rights reserved','auth.title':'Account','auth.login':'Log in','auth.logout':'Log out','auth.register':'Sign up',
+      'auth.registerTab':'Sign up','auth.loginTab':'Log in','auth.email':'Email','auth.password':'Password','auth.password2':'Confirm password',
+      'auth.username':'Username','auth.noAccount':'No account?','auth.registerNow':'Create one','auth.agree':'I agree to the','auth.privacy':'Privacy Policy',
+      'price.na':'HKD —','btn.add':'Add'
+    }
+  };
+  const $ = s => document.querySelector(s);
+  const $$ = s => document.querySelectorAll(s);
+  function setLC(lc){
+    const dict = I18N[lc] || I18N['zh-HK'];
+    $$('[data-i18n]').forEach(el => { const k=el.getAttribute('data-i18n'); if(dict[k]) el.textContent=dict[k]; });
+    $$('[data-i18n-placeholder]').forEach(el => { const k=el.getAttribute('data-i18n-placeholder'); if(dict[k]) el.placeholder=dict[k]; });
+    $('#brand').textContent = dict.brand; $('#brand2').textContent = dict.brand;
+    document.documentElement.lang = lc; localStorage.setItem('dordor-locale', lc);
+  }
+  function getLCFromURL(){ try{ return new URLSearchParams(location.search).get('lc'); }catch{ return null } }
+  const lc = getLCFromURL() || localStorage.getItem('dordor-locale') || 'zh-HK';
+  setLC(lc); $('#locale').value = lc;
+  $('#locale').addEventListener('change', e=>{
+    const v = e.target.value; setLC(v);
+    // 仅在首页更新 URL 的 lc，保持刷新后仍是当前语言
+    const u = new URL(location.href); u.searchParams.set('lc', v); history.replaceState(null,'',u.toString());
+    // 重渲染产品标题/按钮
+    renderAll();
+  });
+
+  // ========== 数据 ==========
+  const IMG = n => `Archive/Untitled_design/${n}.png`;
+  const PREORDER = [
+    {id:19, t:{'zh-HK':'Life-Space 兒童益生菌粉 60g','zh-CN':'Life-Space 儿童益生菌粉 60g',en:'Life-Space Probiotic Powder Kids 60g'}, price:0, img:IMG(19)},
+    {id:18, t:{'zh-HK':'Life-Space 雙倍強度益生菌 30粒','zh-CN':'Life-Space 双倍强度益生菌 30粒',en:'Life-Space Double Strength Probiotic 30s'}, price:0, img:IMG(18)},
+    {id:14, t:{'zh-HK':"Caruso's 膠原蛋白粉 100g",'zh-CN':"Caruso's 胶原蛋白粉 100g",en:"Caruso's Collagen Powder 100g"}, price:21000, img:IMG(14)},
+    {id:15, t:{'zh-HK':"Caruso's 膠原蛋白 60片",'zh-CN':"Caruso's 胶原蛋白 60片",en:"Caruso's Collagen Tablets 60s"}, price:21000, img:IMG(15)},
+    {id:17, t:{'zh-HK':"Designs for Health 高強度 Omega-3 120粒",'zh-CN':"Designs for Health 高强度 Omega-3 120粒",en:"DFH OmegAvail Hi-Po 120s"}, price:0, img:IMG(17)}
+  ];
+  const INSTOCK = [
+    {id:1,  t:{'zh-HK':'PURITI 麥盧卡蜜糖 MGO350 1kg','zh-CN':'PURITI 麦卢卡蜂蜜 MGO350 1kg',en:'PURITI Manuka Honey MGO350 1kg'}, price:43000, img:IMG(1)},
+    {id:2,  t:{'zh-HK':'Hismile 牙膏 60g – 薄荷朱古力','zh-CN':'Hismile 牙膏 60g – 薄荷巧克力',en:'Hismile Toothpaste 60g – Choc Mint'}, price:6500, img:IMG(2)},
+    {id:3,  t:{'zh-HK':'Hismile 牙膏 60g – 士多啤梨奶油','zh-CN':'Hismile 牙膏 60g – 草莓奶油',en:'Hismile Toothpaste 60g – Strawberry Cream'}, price:6500, img:IMG(3)},
+    {id:4,  t:{'zh-HK':'Hismile 牙膏 60g – 可樂味','zh-CN':'Hismile 牙膏 60g – 可乐味',en:'Hismile Toothpaste 60g – Cola'}, price:6500, img:IMG(4)},
+    {id:5,  t:{'zh-HK':'Skin Control 可愛暗瘡貼 36片','zh-CN':'Skin Control 可爱痘痘贴 36片',en:'Skin Control Cute Acne Patch 36s'}, price:6500, img:IMG(5)},
+    {id:6,  t:{'zh-HK':'Dr.PAWPAW 潤唇膏 10ml','zh-CN':'Dr.PAWPAW 润唇膏 10ml',en:'Dr.PAWPAW Balm 10ml'}, price:5500, img:IMG(6)},
+    {id:7,  t:{'zh-HK':'Dr.PAWPAW 豐唇護唇油 8ml','zh-CN':'Dr.PAWPAW 丰唇护唇油 8ml',en:'Dr.PAWPAW Lip Oil 8ml'}, price:5500, img:IMG(7)},
+    {id:8,  t:{'zh-HK':'Dr.PAWPAW 有色潤唇膏 粉紅 10ml','zh-CN':'Dr.PAWPAW 有色润唇膏 粉红 10ml',en:'Dr.PAWPAW Tinted Balm Pink 10ml'}, price:5500, img:IMG(8)},
+    {id:9,  t:{'zh-HK':'Dr.PAWPAW 有色潤唇膏 珊瑚 10ml','zh-CN':'Dr.PAWPAW 有色润唇膏 珊瑚 10ml',en:'Dr.PAWPAW Tinted Balm Coral 10ml'}, price:5500, img:IMG(9)},
+    {id:10, t:{'zh-HK':'T2 French Earl Grey 茶包 10入','zh-CN':'T2 French Earl Grey 茶包 10入',en:'T2 French Earl Grey Tea Bags 10s'}, price:7000, img:IMG(10)},
+    {id:11, t:{'zh-HK':'Sunbites Grainwaves 酸忌廉青蔥 8包','zh-CN':'Sunbites Grainwaves 酸奶油青葱 8包',en:'Sunbites Grainwaves Sour Cream & Chives 8pks'}, price:6500, img:IMG(11)},
+    {id:12, t:{'zh-HK':'Dermal Therapy 有色潤唇膏 玫瑰粉 8g','zh-CN':'Dermal Therapy 有色润唇膏 玫瑰粉 8g',en:'Dermal Therapy Tinted Lip Balm Rose 8g'}, price:6500, img:IMG(12)},
+    {id:13, t:{'zh-HK':'Dermal Therapy 有色潤唇膏 蜜桃裸 8g','zh-CN':'Dermal Therapy 有色润唇膏 蜜桃裸 8g',en:'Dermal Therapy Tinted Lip Balm Peach 8g'}, price:6500, img:IMG(13)},
+    {id:16, t:{'zh-HK':'Healthy Care 蜂膠液 25ml','zh-CN':'Healthy Care 蜂胶液 25ml',en:'Healthy Care Propolis Liquid 25ml'}, price:6500, img:IMG(16)}
+  ];
+
+  // ========== 购物车 ==========
+  const CART_KEY='dordor-cart';
+  function getCart(){ try{ return JSON.parse(localStorage.getItem(CART_KEY))||[] }catch{ return [] } }
+  function setCart(c){ localStorage.setItem(CART_KEY, JSON.stringify(c)); updateBadge(); }
+  function addToCart(item){ const c=getCart(); const i=c.findIndex(x=>x.id===item.id); if(i>=0) c[i].qty+=item.qty; else c.push(item); setCart(c); }
+  function count(){ return getCart().reduce((s,x)=>s+x.qty,0); }
+  function updateBadge(){ const b=$('#cartBadge'); if(b) b.textContent=String(count()); }
+
+  // ========== 渲染 ==========
+  function money(cents){ return cents ? `HKD ${(cents/100).toFixed(2)}` : I18N[localStorage.getItem('dordor-locale')||'zh-HK']['price.na']; }
+  function titleOf(p){ const lang=localStorage.getItem('dordor-locale')||'zh-HK'; return p.t[lang]||p.t['zh-HK']||'TBD'; }
+  function cardHTML(p){
+    const lang=localStorage.getItem('dordor-locale')||'zh-HK';
+    const url = new URL('product.html', location.href);
+    url.searchParams.set('id', p.id);
+    url.searchParams.set('lc', lang);
+    return `
+      <article class="card">
+        <a href="${url.toString()}" style="color:inherit">
+          <div class="media"><img src="${p.img}" alt="${titleOf(p)}" onerror="this.closest('.media').textContent='Image not found';this.remove()"></div>
+        </a>
+        <div class="content">
+          <div>
+            <div class="title">${titleOf(p)}</div>
+            <div class="muted">${money(p.price)}</div>
+          </div>
+          <button class="iconbtn add" data-id="${p.id}" data-img="${p.img}">${I18N[lang]['btn.add']}</button>
+        </div>
+      </article>`;
+  }
+  function render(list, mount){
+    mount.innerHTML = list.map(cardHTML).join('');
+    mount.querySelectorAll('.add').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const id = Number(btn.dataset.id);
+        const p  = [...PREORDER, ...INSTOCK].find(x=>x.id===id);
+        addToCart({ id:String(p.id), title:titleOf(p), price_cents:p.price||0, currency:'HKD', image:p.img, qty:1 });
+      });
+    });
+  }
+  function renderAll(){
+    render(PREORDER, $('#grid-pre'));
+    render(INSTOCK,  $('#grid-stock'));
+    updateBadge();
+  }
+  renderAll();
+
+  // 搜索（前端过滤）
+  $('#q').addEventListener('input', (e)=>{
+    const kw = e.target.value.trim().toLowerCase();
+    const all = [...PREORDER, ...INSTOCK];
+    const match = kw ? all.filter(p => titleOf(p).toLowerCase().includes(kw)) : null;
+    render(match ? match.filter(p=>PREORDER.some(a=>a.id===p.id)) : PREORDER, $('#grid-pre'));
+    render(match ? match.filter(p=>INSTOCK.some(a=>a.id===p.id))  : INSTOCK,  $('#grid-stock'));
+  });
+
+  // 顶部按钮
+  $('#cartBtn').addEventListener('click', ()=>{
+    const lang=localStorage.getItem('dordor-locale')||'zh-HK';
+    const u = new URL('checkout.html', location.href); u.searchParams.set('lc', lang);
+    location.href = u.toString();
+  });
+
+  // 年份
+  const yearEl=$('#year'); if(yearEl) yearEl.textContent=new Date().getFullYear();
+
+  // 登录弹窗交互
+  const authModal=$('#authModal');
+  function openAuth(){ authModal.classList.add('open'); showLogin(); }
+  function closeAuth(){ authModal.classList.remove('open'); }
+  function showLogin(){ $('#loginView').style.display='block'; $('#registerView').style.display='none'; }
+  function showRegister(){ $('#loginView').style.display='none'; $('#registerView').style.display='block'; }
+  $('#loginBtn').addEventListener('click', openAuth);
+  $('#closeAuth').addEventListener('click', closeAuth);
+  $('#tabLogin').addEventListener('click', showLogin);
+  $('#tabRegister').addEventListener('click', showRegister);
+  $('#goRegister').addEventListener('click', showRegister);
+  authModal.addEventListener('click', e=>{ if(e.target===authModal) closeAuth(); });
+  </script>
+</body>
+</html>

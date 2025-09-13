@@ -1,0 +1,139 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DorDor Admin (MVP)</title>
+  <style>
+    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial;background:#0a0a0a;color:#e5e7eb}
+    .wrap{max-width:1100px;margin:0 auto;padding:24px}
+    .card{background:#111315;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:16px;margin-bottom:16px}
+    input,button{height:36px;border-radius:10px;border:1px solid #1f242a;background:#0f1113;color:#e5e7eb;padding:0 10px}
+    button{cursor:pointer}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left}
+    .muted{color:#9ca3af}
+    .row{display:flex;gap:8px;flex-wrap:wrap}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="wrap">
+    <h1>DorDor Admin（MVP）</h1>
+    <p class="muted">邮箱验证码登录 → 读取 profile.role → 仅 admin 可管理商品。</p>
+
+    <div id="auth" class="card">
+      <div class="row">
+        <input id="supabaseUrl" placeholder="SUPABASE_URL" style="min-width:320px" />
+        <input id="supabaseAnon" placeholder="SUPABASE_ANON_KEY" style="min-width:360px" />
+      </div>
+      <div class="row" style="margin-top:8px">
+        <input id="email" placeholder="管理员邮箱" style="min-width:300px" />
+        <button id="sendOtp">发送登录链接/验证码</button>
+        <input id="otp" placeholder="输入验证码（如选择 OTP 登录）" />
+        <button id="verifyOtp">验证 OTP</button>
+      </div>
+      <div id="authStatus" class="muted" style="margin-top:6px"></div>
+    </div>
+
+    <div id="admin" class="card" style="display:none">
+      <h2>商品管理</h2>
+      <div class="row">
+        <button id="refresh">刷新商品列表</button>
+        <button id="addDemo">快速新增示例商品</button>
+      </div>
+      <table>
+        <thead><tr><th>标题(EN)</th><th>分类</th><th>价格(HKD分)</th><th>库存</th><th>操作</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+<script>
+let supabase
+
+function initClient(){
+  const url = document.getElementById('supabaseUrl').value.trim()
+  const anon = document.getElementById('supabaseAnon').value.trim()
+  if(!url || !anon) return alert('请先填入 SUPABASE_URL 与 SUPABASE_ANON_KEY')
+  supabase = window.supabase.createClient(url, anon)
+  return supabase
+}
+
+async function sendOtp(){
+  if(!initClient()) return
+  const email = document.getElementById('email').value.trim()
+  if(!email) return alert('请输入邮箱')
+  const { error } = await supabase.auth.signInWithOtp({ email })
+  document.getElementById('authStatus').textContent = error ? ('发送失败：' + error.message) : '已发送，请查收邮件（或查看验证码登录）。'
+}
+
+async function verifyOtp(){
+  if(!initClient()) return
+  const email = document.getElementById('email').value.trim()
+  const token = document.getElementById('otp').value.trim()
+  if(!email || !token) return alert('请输入邮箱与验证码')
+  const { data, error } = await supabase.auth.verifyOtp({ email, token, type: 'email' })
+  document.getElementById('authStatus').textContent = error ? ('验证失败：' + error.message) : '验证成功，正在读取权限…'
+  if(!error) await checkRole()
+}
+
+async function checkRole(){
+  const { data: { user } } = await supabase.auth.getUser()
+  if(!user) return
+  const { data, error } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if(error){ document.getElementById('authStatus').textContent = '读取角色失败：'+error.message; return }
+  if(data?.role === 'admin'){ document.getElementById('admin').style.display = 'block'; loadProducts() }
+  else { document.getElementById('authStatus').textContent = '当前账户非管理员，无法访问 /admin' }
+}
+
+async function loadProducts(){
+  const { data, error } = await supabase.from('products').select('id,title_en,price_cents,category_id')
+  if(error){ alert('读取商品失败：'+error.message); return }
+  const tbody = document.getElementById('tbody'); tbody.innerHTML = ''
+  for(const p of data){
+    // fetch inventory
+    let stock = ''
+    const { data: inv } = await supabase.from('inventory').select('stock').eq('product_id', p.id).maybeSingle()
+    stock = inv?.stock ?? ''
+    const tr = document.createElement('tr')
+    tr.innerHTML = `<td>${p.title_en||''}</td><td>${p.category_id||''}</td><td>${p.price_cents||''}</td><td>${stock}</td>
+      <td><button data-id="${p.id}" class="del">删除</button></td>`
+    tbody.appendChild(tr)
+  }
+  document.querySelectorAll('button.del').forEach(btn=>{
+    btn.onclick = async () => {
+      const id = btn.getAttribute('data-id')
+      await supabase.from('inventory').delete().eq('product_id', id)
+      await supabase.from('products').delete().eq('id', id)
+      loadProducts()
+    }
+  })
+}
+
+async function addDemo(){
+  const payload = {
+    title_en: 'Sample Product',
+    title_zh_cn: '示例商品',
+    title_zh_hk: '示例商品',
+    price_cents: 19900, currency: 'HKD',
+    description_en: 'Demo',
+    description_zh_cn: '演示',
+    description_zh_hk: '演示',
+    images: [], main_image_url: null,
+    category_id: null
+  }
+  const { data, error } = await supabase.from('products').insert(payload).select('id').single()
+  if(error) return alert('新增失败：'+error.message)
+  await supabase.from('inventory').insert({ product_id: data.id, sku: null, stock: 0 })
+  loadProducts()
+}
+
+document.getElementById('sendOtp').onclick = sendOtp
+document.getElementById('verifyOtp').onclick = verifyOtp
+document.getElementById('refresh').onclick = loadProducts
+document.getElementById('addDemo').onclick = addDemo
+</script>
+</body>
+</html>

@@ -1,0 +1,264 @@
+<!-- checkout.html -->
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Checkout · 待定</title>
+  <style>
+    :root{ --border:#e5e7eb; --muted:#6b7280; --ring:#3b82f6; }
+    body{ margin:0; font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial; color:#111827; background:#fff; }
+    .container{ max-width:1100px; margin:0 auto; padding:16px; }
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+    .muted{ color:var(--muted); }
+    .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:20px; }
+    @media (max-width:900px){ .grid{ grid-template-columns: 1fr; } }
+    .card{ border:1px solid var(--border); border-radius:14px; padding:16px; }
+    .row{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .row-1{ display:grid; grid-template-columns: 1fr; gap:10px; }
+    .input, .btn, textarea{ border:1px solid var(--border); border-radius:10px; padding:10px 12px; font-size:14px; width:100%; }
+    .input:focus, textarea:focus{ outline:2px solid var(--ring); outline-offset:2px; }
+    .btn{ cursor:pointer; height:42px; }
+    img.thumb{ width:60px; height:60px; object-fit:cover; border:1px solid var(--border); border-radius:8px; background:#fff; }
+    .line{ display:flex; align-items:center; gap:10px; justify-content:space-between; padding:8px 0; border-bottom:1px dashed var(--border); }
+    .total{ font-weight:700; font-size:18px; text-align:right; }
+    .title{font-weight:700;font-size:18px}
+    a{color:inherit;text-decoration:none}
+    .link{color:#2563eb}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="title" id="pageTitle">結算</div>
+      <div class="muted" id="brand">待定</div>
+    </div>
+
+    <div class="grid">
+      <!-- 左：收件信息 -->
+      <div class="card">
+        <h3 id="hShipping">收件信息</h3>
+        <div class="row">
+          <input id="name" class="input" placeholder="收件人姓名">
+          <input id="phone" class="input" placeholder="联系电话（WhatsApp/微信可）">
+        </div>
+        <div class="row">
+          <input id="country" class="input" placeholder="国家/地区">
+          <input id="region" class="input" placeholder="省/州/地区">
+        </div>
+        <div class="row">
+          <input id="city" class="input" placeholder="城市">
+          <input id="postal" class="input" placeholder="邮编">
+        </div>
+        <div class="row-1">
+          <input id="addr1" class="input" placeholder="详细地址（街道/门牌）">
+          <input id="addr2" class="input" placeholder="补充地址（楼层/单元）">
+          <textarea id="note" rows="3" placeholder="备注（可选）"></textarea>
+        </div>
+        <div style="height:10px"></div>
+        <button class="btn" id="submitOrder">提交订单（线下付款）</button>
+        <div class="muted" id="offlineHint">提交后我们将以你提供的联系方式与您确认并安排付款。</div>
+        <div id="msg" class="muted"></div>
+      </div>
+
+      <!-- 右：购物车 -->
+      <div class="card">
+        <h3 id="hCart">购物车</h3>
+        <div id="cartList"></div>
+        <div class="total" id="cartTotal"></div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px">
+      <a class="link" id="backLink" href="index.html">← 返回继续选购</a>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // ======= i18n =======
+    const I18N = {
+      'zh-HK': {
+        brand:'待定', pageTitle:'結算', back:'← 返回繼續選購',
+        hShipping:'收件資料', hCart:'購物車',
+        name:'收件人姓名', phone:'聯絡電話（WhatsApp/微信可）',
+        country:'國家/地區', region:'省/州/地區', city:'城市', postal:'郵編',
+        addr1:'詳細地址（街道/門牌）', addr2:'補充地址（樓層/單元）', note:'備註（可選）',
+        submit:'提交訂單（線下付款）',
+        offlineHint:'提交後我們會用你提供的聯絡方式與你確認並安排付款。',
+        empty:'購物車為空', total:'合計：', currency:'HKD',
+        alertNeed:'請至少填寫姓名、電話、國家/地區、城市、詳細地址',
+        submitting:'提交中…', success:'提交成功！訂單已建立（編號：{id}）。我們會私下聯絡你付款。',
+        fail:'提交失敗：'
+      },
+      'zh-CN': {
+        brand:'待定', pageTitle:'结算', back:'← 返回继续选购',
+        hShipping:'收件信息', hCart:'购物车',
+        name:'收件人姓名', phone:'联系电话（WhatsApp/微信可）',
+        country:'国家/地区', region:'省/州/地区', city:'城市', postal:'邮编',
+        addr1:'详细地址（街道/门牌）', addr2:'补充地址（楼层/单元）', note:'备注（可选）',
+        submit:'提交订单（线下付款）',
+        offlineHint:'提交后我们会用你提供的联系方式与您确认并安排付款。',
+        empty:'购物车为空', total:'合计：', currency:'HKD',
+        alertNeed:'请至少填写姓名、电话、国家/地区、城市、详细地址',
+        submitting:'提交中…', success:'提交成功！订单已创建（编号：{id}）。我们会私下联系你付款。',
+        fail:'提交失败：'
+      },
+      'en': {
+        brand:'TBD', pageTitle:'Checkout', back:'← Back to shopping',
+        hShipping:'Shipping details', hCart:'Cart',
+        name:'Recipient name', phone:'Contact phone (WhatsApp/WeChat accepted)',
+        country:'Country/Region', region:'State/Province', city:'City', postal:'Postal code',
+        addr1:'Address line 1 (street/number)', addr2:'Address line 2 (apt/floor)', note:'Note (optional)',
+        submit:'Place order (offline payment)',
+        offlineHint:'After submitting we will contact you using your info to confirm and arrange payment.',
+        empty:'Your cart is empty', total:'Total: ', currency:'HKD',
+        alertNeed:'Please fill at least name, phone, country/region, city and address line 1.',
+        submitting:'Submitting…', success:'Submitted! Order created (ID: {id}). We will contact you for payment.',
+        fail:'Failed: '
+      }
+    };
+    function getLCFromURL(){ try{ return new URLSearchParams(location.search).get('lc'); }catch{ return null } }
+    const lc = getLCFromURL() || localStorage.getItem('dordor-locale') || 'zh-HK';
+    localStorage.setItem('dordor-locale', lc);
+    document.documentElement.lang = lc;
+    const t = I18N[lc] || I18N['zh-HK'];
+
+    // 将文案应用到页面
+    document.getElementById('brand').textContent = t.brand;
+    document.getElementById('pageTitle').textContent = t.pageTitle;
+    document.getElementById('hShipping').textContent = t.hShipping;
+    document.getElementById('hCart').textContent = t.hCart;
+    document.getElementById('name').placeholder = t.name;
+    document.getElementById('phone').placeholder = t.phone;
+    document.getElementById('country').placeholder = t.country;
+    document.getElementById('region').placeholder = t.region;
+    document.getElementById('city').placeholder = t.city;
+    document.getElementById('postal').placeholder = t.postal;
+    document.getElementById('addr1').placeholder = t.addr1;
+    document.getElementById('addr2').placeholder = t.addr2;
+    document.getElementById('note').placeholder = t.note;
+    document.getElementById('submitOrder').textContent = t.submit;
+    document.getElementById('offlineHint').textContent = t.offlineHint;
+    const back = new URL('index.html', location.href); back.searchParams.set('lc', lc);
+    const backLink = document.getElementById('backLink'); backLink.href = back.toString(); backLink.textContent = t.back;
+
+    // ======= Supabase（替换为你的项目配置） =======
+    const SUPABASE_URL  = 'https://<YOUR>.supabase.co';
+    const SUPABASE_ANON = '<YOUR-ANON-KEY>';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+    // ======= 购物车 =======
+    const CART_KEY = 'dordor-cart';
+    function getCart(){ try{ return JSON.parse(localStorage.getItem(CART_KEY))||[] }catch{ return [] } }
+    function setCart(c){ localStorage.setItem(CART_KEY, JSON.stringify(c)); }
+    function moneyHKD(cents){ return `${t.currency} ${(cents/100).toFixed(2)}`; }
+
+    function renderCart(){
+      const list = getCart();
+      const box = document.getElementById('cartList');
+      const totalEl = document.getElementById('cartTotal');
+      box.innerHTML = '';
+      if(list.length===0){
+        box.innerHTML = `<div class="muted">${t.empty}</div>`;
+        totalEl.textContent = t.total + moneyHKD(0);
+        return;
+      }
+      let total = 0;
+      list.forEach(item=>{
+        total += (item.price_cents||0) * item.qty;
+        const line = document.createElement('div');
+        line.className = 'line';
+        line.innerHTML = `
+          <div style="display:flex;align-items:center;gap:10px">
+            <img class="thumb" src="${item.image}" alt="">
+            <div>
+              <div>${item.title}</div>
+              <div class="muted">${item.currency||t.currency} ${(item.price_cents||0)/100} × ${item.qty}</div>
+            </div>
+          </div>
+          <div>${moneyHKD((item.price_cents||0)*item.qty)}</div>
+        `;
+        box.appendChild(line);
+      });
+      totalEl.textContent = t.total + moneyHKD(total);
+    }
+
+    async function createOrderInDB(payload){
+      // orders
+      const { data: order, error: e1 } = await supabase
+        .from('orders')
+        .insert([{
+          user_id: null,
+          status: 'quoted',
+          total_cents: payload.total_cents,
+          currency: 'HKD',
+          recipient_name: payload.name,
+          phone: payload.phone,
+          address_line1: payload.addr1,
+          address_line2: payload.addr2,
+          city: payload.city,
+          region: payload.region,
+          postal_code: payload.postal,
+          country: payload.country,
+          note: payload.note
+        }])
+        .select('id')
+        .single();
+      if(e1) throw e1;
+
+      // order_items
+      const items = payload.items.map(it => ({
+        order_id: order.id,
+        product_id: null,  // 暂无真实 product_id
+        quantity: it.qty,
+        price_cents: it.price_cents
+      }));
+      const { error: e2 } = await supabase.from('order_items').insert(items);
+      if(e2) throw e2;
+
+      return order.id;
+    }
+
+    document.getElementById('submitOrder').onclick = async ()=>{
+      const list = getCart();
+      if(list.length===0){ alert(t.empty); return; }
+      const name  = document.getElementById('name').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const country = document.getElementById('country').value.trim();
+      const region  = document.getElementById('region').value.trim();
+      const city    = document.getElementById('city').value.trim();
+      const postal  = document.getElementById('postal').value.trim();
+      const addr1   = document.getElementById('addr1').value.trim();
+      const addr2   = document.getElementById('addr2').value.trim();
+      const note    = document.getElementById('note').value.trim();
+      if(!name || !phone || !addr1 || !city || !country){ alert(t.alertNeed); return; }
+
+      const total = list.reduce((s,x)=> s + (x.price_cents||0)*x.qty, 0);
+      const payload = {
+        items: list,
+        total_cents: total,
+        name, phone, country, region, city, postal, addr1, addr2, note
+      };
+
+      const btn = document.getElementById('submitOrder'); const old = btn.textContent;
+      btn.disabled = true; btn.textContent = t.submitting;
+
+      try{
+        const orderId = await createOrderInDB(payload);
+        setCart([]); // 清空购物车
+        alert(t.success.replace('{id}', orderId));
+        const back = new URL('index.html', location.href); back.searchParams.set('lc', lc);
+        location.href = back.toString();
+      }catch(e){
+        console.error(e);
+        alert(t.fail + (e.message || ''));
+      }finally{
+        btn.disabled = false; btn.textContent = old;
+      }
+    };
+
+    renderCart();
+  </script>
+</body>
+</html>
